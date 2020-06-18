@@ -1,5 +1,5 @@
 from collections import defaultdict
-from pysnooper import snoop
+#from pysnooper import snoop
 
 class Node:
     def __init__(self,string):
@@ -63,10 +63,11 @@ def parser_job(jobfile,NodePattern):
                 Node1 = TotalNodelist[stringlist.index(a)]
                 Node2 = TotalNodelist[stringlist.index(b)]
             Node1.add_tail(Node2)
-            if NodePattern in Node1.string:
-                Nodelist.append(Node1)
-            if NodePattern in Node2.string:
-                Nodelist.append(Node2)
+            for sub in NodePattern.split("|"):
+                if sub in Node1.string:
+                    Nodelist.append(Node1)
+                if sub in Node2.string:
+                    Nodelist.append(Node2)
     return Nodelist
 
 def parser_writejob(jobfile,namelist):
@@ -121,7 +122,10 @@ def parser_writeafterjob(jobfile,outlist):
                 if name1 in outlist and name2 in outlist:
                     print(line.strip())
 
-def main(jobfile,jobpattern,ifNow=False, OnlyAfter=False):
+def main(jobfile,jobpattern,ifNow=False, OnlyAfter=False,before_out=True):
+    # ifNow contains the current cmd
+    # OnlyAfter running for after or make done for before cmds
+    # before_out only output before cmds when OnlyAfter is False
     Nodelist = parser_job(jobfile,jobpattern)
     nowlist = [Node.string for Node in Nodelist]
     beforelist = []
@@ -134,6 +138,7 @@ def main(jobfile,jobpattern,ifNow=False, OnlyAfter=False):
         afterlist.extend(list1)
     if ifNow:
         outlist = set(beforelist) | set(nowlist)
+        #print(outlist)
     else:
         outlist = set(beforelist)
     if OnlyAfter:
@@ -143,7 +148,11 @@ def main(jobfile,jobpattern,ifNow=False, OnlyAfter=False):
             outlist = set(afterlist)
     # __import__('pdb').set_trace()
     if not OnlyAfter:
-        parser_writejob(jobfile,outlist)
+        #print(outlist)
+        if before_out:
+            parser_writeafterjob(jobfile,outlist)
+        else:
+            parser_writejob(jobfile,outlist)
     else:
         parser_writeafterjob(jobfile,outlist)
 
